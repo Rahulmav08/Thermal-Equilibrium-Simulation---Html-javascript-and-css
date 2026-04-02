@@ -13,7 +13,6 @@ body{
   overflow:hidden;
 }
 
-/* ⭐ Stars */
 #stars{
   position:fixed;
   top:0;
@@ -23,7 +22,7 @@ body{
   z-index:-1;
 }
 
-/* Header */
+
 header{
   display:flex;
   justify-content:space-between;
@@ -62,7 +61,6 @@ button{
   cursor:pointer;
 }
 
-/* Layout */
 main{
   padding:40px;
 }
@@ -75,7 +73,6 @@ main{
   margin-bottom:30px;
 }
 
-/* Blocks */
 .block{
   width:160px;
   height:160px;
@@ -95,13 +92,11 @@ main{
   opacity:.7;
 }
 
-/* Heat */
 #heat{
   width:320px;
   height:150px;
 }
 
-/* Gradient */
 .gradient-bar{
   width:60%;
   height:18px;
@@ -122,7 +117,6 @@ main{
   transition:.3s;
 }
 
-/* Dashboard */
 .dashboard{
   display:grid;
   grid-template-columns:1fr 1fr 1fr;
@@ -223,7 +217,6 @@ footer{
 
 
 <script>
-/* ⭐ STARS */
 const starCanvas=document.getElementById("stars");
 const sctx=starCanvas.getContext("2d");
 starCanvas.width=innerWidth;
@@ -242,7 +235,7 @@ function drawStars(){
 }
 drawStars();
 
-/* ELEMENTS */
+
 const modeSelect=document.getElementById("mode");
 const blockA=document.getElementById("blockA");
 const blockB=document.getElementById("blockB");
@@ -263,27 +256,22 @@ graphCanvas.width=400;graphCanvas.height=200;
 
 let tA,tB,tC,running=false,mode=2,histA=[],histB=[],histC=[],arrowOffset=0;
 
-/* MODE */
 modeSelect.onchange=()=>{
   mode=parseInt(modeSelect.value);
   blockC.style.display=mode===3?"flex":"none";
   inputCContainer.style.display=mode===3?"flex":"none";
 };
 
-/* COLOR */
 function color(n){
   let r=255*n;let b=255*(1-n);let g=150*(1-Math.abs(n-0.5)*2);
   return `rgb(${r},${g},${b})`;
 }
 
-/* HEAT with arrows */
 function drawHeat(){
   ctx.clearRect(0,0,320,150);
 
-  // Determine direction of heat flow
   let direction = tA > tB ? 1 : -1;
 
-  // Draw multiple arrows
   for(let i=0;i<5;i++){
     let x=(i*70+arrowOffset)%320;
     ctx.beginPath();
@@ -293,7 +281,6 @@ function drawHeat(){
     ctx.lineWidth=2;
     ctx.stroke();
 
-    // Arrowhead
     ctx.beginPath();
     if(direction===1){
       ctx.moveTo(x+20,75);
@@ -308,10 +295,9 @@ function drawHeat(){
     ctx.fill();
   }
 
-  arrowOffset+=2; // speed of arrow movement
+  arrowOffset+=2;
 }
 
-/* GRAPH */
 function drawGraph(){
   gctx.clearRect(0,0,400,200);
   if(histA.length<2) return;
@@ -330,7 +316,6 @@ function drawGraph(){
   if(mode===3) line(histC,"lime");
 }
 
-/* Update markers wrt temperature, clamped */
 function updateMarkers(){
   let barWidth=document.querySelector(".gradient-bar").offsetWidth;
   function clamp(val){ return Math.max(0, Math.min(100,val)); }
@@ -338,8 +323,6 @@ function updateMarkers(){
   markerB.style.left=(clamp(tB)/100*barWidth-7)+"px";
   if(mode===3) markerC.style.left=(clamp(tC)/100*barWidth-7)+"px";
 }
-
-/* SIMULATION */
 function simulate(){
   if(!running) return;
 
@@ -388,7 +371,6 @@ function simulate(){
   requestAnimationFrame(simulate);
 }
 
-/* START */
 document.getElementById("startBtn").onclick=()=>{
   if(running) return;
   tA=parseFloat(inputA.value);
@@ -402,7 +384,6 @@ document.getElementById("startBtn").onclick=()=>{
   simulate();
 }
 
-/* RESET */
 document.getElementById("resetBtn").onclick=()=>location.reload();
 </script>
 
