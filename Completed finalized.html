@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Thermal Equilibrium Simulation</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Segoe UI;
+  background:#020617;
+  color:white;
+  overflow:hidden;
+}
+
+/* ⭐ Stars */
+#stars{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
+}
+
+/* Header */
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 40px;
+  background:rgba(0,0,0,.4);
+  border-bottom:1px solid #1e293b;
+}
+
+.panel{
+  display:flex;
+  gap:12px;
+  align-items:end;
+}
+
+.panel div{
+  display:flex;
+  flex-direction:column;
+  font-size:12px;
+}
+
+input, select{
+  padding:6px;
+  background:#111827;
+  border:1px solid #334155;
+  border-radius:6px;
+  color:white;
+}
+
+button{
+  padding:6px 14px;
+  background:#2563eb;
+  border:none;
+  border-radius:6px;
+  color:white;
+  cursor:pointer;
+}
+
+/* Layout */
+main{
+  padding:40px;
+}
+
+.simulation{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:60px;
+  margin-bottom:30px;
+}
+
+/* Blocks */
+.block{
+  width:160px;
+  height:160px;
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  font-size:22px;
+  font-weight:bold;
+  box-shadow:0 0 30px rgba(0,0,0,.9);
+  transition:.4s;
+}
+
+.label{
+  font-size:14px;
+  opacity:.7;
+}
+
+/* Heat */
+#heat{
+  width:320px;
+  height:150px;
+}
+
+/* Gradient */
+.gradient-bar{
+  width:60%;
+  height:18px;
+  margin:auto;
+  border-radius:10px;
+  background:linear-gradient(to right, red, orange, yellow, cyan, blue);
+  position:relative;
+  border:1px solid rgba(255,255,255,0.2);
+}
+
+.marker{
+  width:14px;
+  height:14px;
+  background:white;
+  border-radius:50%;
+  position:absolute;
+  top:2px;
+  transition:.3s;
+}
+
+/* Dashboard */
+.dashboard{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:20px;
+  margin-top:30px;
+}
+
+.analytics,.data,.definition{
+  background:rgba(15,23,42,.9);
+  padding:20px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.1);
+}
+
+#graph{
+  background:rgba(15,23,42,.9);
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.1);
+  padding:10px;
+}
+
+footer{
+  text-align:center;
+  padding:10px;
+  opacity:.6;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="stars"></canvas>
+
+<header>
+<h2>Thermal Equilibrium</h2>
+<div class="panel">
+  <div>
+    <label>Mode</label>
+    <select id="mode">
+      <option value="2">2 Bodies</option>
+      <option value="3">3 Bodies</option>
+    </select>
+  </div>
+  <div>
+    <label>A</label>
+    <input type="number" id="inputA" value="90">
+  </div>
+  <div>
+    <label>B</label>
+    <input type="number" id="inputB" value="10">
+  </div>
+  <div id="inputCContainer" style="display:none;">
+    <label>C</label>
+    <input type="number" id="inputC" value="50">
+  </div>
+  <button id="startBtn">Start</button>
+  <button id="resetBtn">Reset</button>
+</div>
+</header>
+
+<main>
+<section class="simulation">
+  <div class="block" id="blockA"><div class="label">Body A</div><div>90°C</div></div>
+  <canvas id="heat"></canvas>
+  <div class="block" id="blockB"><div class="label">Body B</div><div>10°C</div></div>
+  <div class="block" id="blockC" style="display:none;"><div class="label">Body C</div><div>50°C</div></div>
+</section>
+
+<div class="gradient-bar">
+  <div class="marker" id="markerA"></div>
+  <div class="marker" id="markerB"></div>
+  <div class="marker" id="markerC"></div>
+</div>
+
+<section class="dashboard">
+  <div class="analytics">
+    <h3>Temperature Graph</h3>
+    <canvas id="graph"></canvas>
+  </div>
+  <div class="data">
+    <h3>Simulation Data</h3>
+    <p><b>Initial Temperature A:</b> <span id="initialA">-</span></p>
+    <p><b>Initial Temperature B:</b> <span id="initialB">-</span></p>
+    <p><b>Initial Temperature C:</b> <span id="initialC">-</span></p>
+    <hr>
+    <p><b>Final Equilibrium Temperature:</b> <span id="finalTemp">-</span></p>
+  </div>
+  <div class="definition">
+    <h3>Result</h3>
+    <p id="resultText">Waiting...</p>
+  </div>
+</section>
+</main>
+
+<footer style="letter-spacing:2px; text-shadow:0 0 6px cyan;">
+✦ Maverick ✦ Physics Simulation ✦
+</footer>
+
+
+<script>
+/* ⭐ STARS */
+const starCanvas=document.getElementById("stars");
+const sctx=starCanvas.getContext("2d");
+starCanvas.width=innerWidth;
+starCanvas.height=innerHeight;
+let stars=[];
+for(let i=0;i<150;i++){stars.push({x:Math.random()*innerWidth,y:Math.random()*innerHeight,size:Math.random()*2});}
+function drawStars(){
+  sctx.clearRect(0,0,innerWidth,innerHeight);
+  stars.forEach(s=>{
+    sctx.fillStyle="white";
+    sctx.fillRect(s.x,s.y,s.size,s.size);
+    s.y+=0.3;
+    if(s.y>innerHeight)s.y=0;
+  });
+  requestAnimationFrame(drawStars);
+}
+drawStars();
+
+/* ELEMENTS */
+const modeSelect=document.getElementById("mode");
+const blockA=document.getElementById("blockA");
+const blockB=document.getElementById("blockB");
+const blockC=document.getElementById("blockC");
+const inputA=document.getElementById("inputA");
+const inputB=document.getElementById("inputB");
+const inputC=document.getElementById("inputC");
+const inputCContainer=document.getElementById("inputCContainer");
+const markerA=document.getElementById("markerA");
+const markerB=document.getElementById("markerB");
+const markerC=document.getElementById("markerC");
+const heatCanvas=document.getElementById("heat");
+const ctx=heatCanvas.getContext("2d");
+const graphCanvas=document.getElementById("graph");
+const gctx=graphCanvas.getContext("2d");
+heatCanvas.width=320;heatCanvas.height=150;
+graphCanvas.width=400;graphCanvas.height=200;
+
+let tA,tB,tC,running=false,mode=2,histA=[],histB=[],histC=[],arrowOffset=0;
+
+/* MODE */
+modeSelect.onchange=()=>{
+  mode=parseInt(modeSelect.value);
+  blockC.style.display=mode===3?"flex":"none";
+  inputCContainer.style.display=mode===3?"flex":"none";
+};
+
+/* COLOR */
+function color(n){
+  let r=255*n;let b=255*(1-n);let g=150*(1-Math.abs(n-0.5)*2);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* HEAT with arrows */
+function drawHeat(){
+  ctx.clearRect(0,0,320,150);
+
+  // Determine direction of heat flow
+  let direction = tA > tB ? 1 : -1;
+
+  // Draw multiple arrows
+  for(let i=0;i<5;i++){
+    let x=(i*70+arrowOffset)%320;
+    ctx.beginPath();
+    ctx.moveTo(x,75);
+    ctx.lineTo(x+20*direction,75);
+    ctx.strokeStyle="white";
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    // Arrowhead
+    ctx.beginPath();
+    if(direction===1){
+      ctx.moveTo(x+20,75);
+      ctx.lineTo(x+15,70);
+      ctx.lineTo(x+15,80);
+    } else {
+      ctx.moveTo(x,75);
+      ctx.lineTo(x+5,70);
+      ctx.lineTo(x+5,80);
+    }
+    ctx.fillStyle="white";
+    ctx.fill();
+  }
+
+  arrowOffset+=2; // speed of arrow movement
+}
+
+/* GRAPH */
+function drawGraph(){
+  gctx.clearRect(0,0,400,200);
+  if(histA.length<2) return;
+  let max=Math.max(...histA,...histB,...(mode===3?histC:[]),100);
+  let step=400/120;
+  function line(data,color){
+    gctx.strokeStyle=color;gctx.beginPath();
+    data.forEach((t,i)=>{
+      let x=i*step;let y=200-(t/max)*200;
+      i===0?gctx.moveTo(x,y):gctx.lineTo(x,y);
+    });
+    gctx.stroke();
+  }
+  line(histA,"red");
+  line(histB,"cyan");
+  if(mode===3) line(histC,"lime");
+}
+
+/* Update markers wrt temperature, clamped */
+function updateMarkers(){
+  let barWidth=document.querySelector(".gradient-bar").offsetWidth;
+  function clamp(val){ return Math.max(0, Math.min(100,val)); }
+  markerA.style.left=(clamp(tA)/100*barWidth-7)+"px";
+  markerB.style.left=(clamp(tB)/100*barWidth-7)+"px";
+  if(mode===3) markerC.style.left=(clamp(tC)/100*barWidth-7)+"px";
+}
+
+/* SIMULATION */
+function simulate(){
+  if(!running) return;
+
+  let avg= mode===2 ? (tA+tB)/2 : (tA+tB+tC)/3;
+  tA+=(avg-tA)*0.03;
+  tB+=(avg-tB)*0.03;
+  if(mode===3) tC+=(avg-tC)*0.03;
+
+  blockA.children[1].innerText=tA.toFixed(1)+"°C";
+  blockB.children[1].innerText=tB.toFixed(1)+"°C";
+  if(mode===3){
+    blockC.children[1].innerText=tC.toFixed(1)+"°C";
+    histC.push(tC);
+  }
+
+  histA.push(tA);
+  histB.push(tB);
+
+  drawHeat();
+  drawGraph();
+  updateMarkers();
+
+  let max=Math.max(tA,tB,(mode===3?tC:0),100);
+  blockA.style.background=color(tA/max);
+  blockB.style.background=color(tB/max);
+  if(mode===3) blockC.style.background=color(tC/max);
+
+  blockA.style.boxShadow=`0 0 ${30+Math.abs(tA-tB)}px ${color(tA/max)}`;
+  blockB.style.boxShadow=`0 0 ${30+Math.abs(tA-tB)}px ${color(tB/max)}`;
+  if(mode===3) blockC.style.boxShadow=`0 0 ${30+Math.abs(tA-tB)}px ${color(tC/max)}`;
+
+  let done = mode===2
+    ? Math.abs(tA-tB)<0.3
+    : Math.abs(tA-tB)<0.3 && Math.abs(tB-tC)<0.3;
+
+  if(done){
+    running=false;
+    let final=(mode===2? (tA+tB)/2 : (tA+tB+tC)/3).toFixed(2);
+    document.getElementById("finalTemp").innerText=final;
+    document.getElementById("resultText").innerText=
+      "Thermal equilibrium has been achieved. Heat flowed from the hotter body to the colder one until all reached the same temperature. " +
+      "This demonstrates the Zeroth Law of Thermodynamics: when bodies are in mutual equilibrium, they share a common temperature. " +
+      "The final equilibrium temperature is "+final+"°C.";
+  }
+
+  requestAnimationFrame(simulate);
+}
+
+/* START */
+document.getElementById("startBtn").onclick=()=>{
+  if(running) return;
+  tA=parseFloat(inputA.value);
+  tB=parseFloat(inputB.value);
+  tC=parseFloat(inputC.value);
+  histA=[]; histB=[]; histC=[];
+  document.getElementById("initialA").innerText=tA;
+  document.getElementById("initialB").innerText=tB;
+  if(mode===3) document.getElementById("initialC").innerText=tC;
+  running=true;
+  simulate();
+}
+
+/* RESET */
+document.getElementById("resetBtn").onclick=()=>location.reload();
+</script>
+
+</body>
+</html>
